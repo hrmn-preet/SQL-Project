@@ -9,41 +9,40 @@
 ### Question 1: Which cities and countries have the highest level of transaction revenues on the site?**
 **Query #1 :  List of the cities and coutries ranked on the basis of transaction revenue.**
 ```
-SELECT 	CASE WHEN city IN ('not available in demo dataset','NULL') THEN country
-		ELSE city
-		END as city,
+SELECT 		CASE WHEN city IN ('not available in demo dataset','NULL') THEN country
+	     	ELSE city
+	     	END as city,
 		country,
 		SUM(total_transactionrevenue) as total_revenue
-FROM all_sessions
-WHERE total_transactionrevenue > 0
-GROUP BY    city, 
-            country
-ORDER BY total_revenue DESC
+FROM 		all_sessions
+WHERE		total_transactionrevenue > 0
+GROUP BY	city, 
+		country
+ORDER BY 	total_revenue DESC
 ```
 **Query #2 : Ranked list of cities grouped by countries. The RANK function used gives ranking to different cities in each country based on the revenue it has generated.**
 ```
 WITH revenue as
-    (   
-        SELECT  CASE WHEN city IN ('not available in demo dataset','NULL') THEN country
-                ELSE city
-		        END as city,
-		        country,
-		        SUM(total_transactionrevenue) as total_revenue  
-		FROM all_sessions
-		WHERE total_transactionrevenue > 0
-		GROUP BY    city,
-		            country
-		ORDER BY total_revenue DESC
-	)
-		
-		
+(   
+        SELECT		CASE WHEN city IN ('not available in demo dataset','NULL') THEN country
+                	ELSE city
+			END as city,
+			country,
+			SUM(total_transactionrevenue) as total_revenue  
+			FROM all_sessions
+	WHERE		total_transactionrevenue > 0
+	GROUP BY   	city,
+			country
+	ORDER BY total_revenue DESC
+)
+				
 SELECT  city, 
         country,
         total_revenue, 
         RANK() OVER(
         PARTITION BY country 
         ORDER BY total_revenue DESC) 
-FROM revenue
+FROM 	revenue
 ```
 
 ### Question 2: What is the average number of products ordered from visitors in each city and country?
@@ -52,41 +51,41 @@ FROM revenue
 ```
 WITH number_city_country AS
 (
-    SELECT  city,
-            country,
-            SUM(CASE WHEN product_quantity IS NULL THEN '1'
-				ELSE product_quantity
-				END) as products_per_city,
-			COUNT(city) as orders_per_city
-    FROM all_sessions
-    WHERE city NOT IN ('not available in demo dataset','(not set)')
+    SELECT  	city,
+            	country,
+            	SUM(CASE WHEN product_quantity IS NULL THEN '1'
+		ELSE product_quantity
+		END) as products_per_city,
+		COUNT(city) as orders_per_city
+    FROM 	all_sessions
+    WHERE 	city NOT IN ('not available in demo dataset','(not set)')
     GROUP BY    city,
                 country
-    ORDER BY city
+    ORDER BY	city
 )
 
-SELECT  city,
-        country,
-        ROUND((products_per_city::FLOAT/orders_per_city::FLOAT)::NUMERIC,2) as average_products
-FROM number_city_country
-ORDER BY    country,
-            city
+SELECT  	city,
+      		country,
+        	ROUND((products_per_city::FLOAT/orders_per_city::FLOAT)::NUMERIC,2) as average_products
+FROM		number_city_country
+ORDER BY	country,
+        	city
 ```
 **QUERY #2 : More filtered with the average above 1 which corresponds to the rows that had non-null product quantity values.** 
 ```
 WITH number_city_country AS
 (
-    SELECT  city,
-            country,
-            SUM(CASE WHEN product_quantity IS NULL THEN '1'
-				ELSE product_quantity
-				END) as products_per_city,
-			COUNT(city) as orders_per_city
-    FROM all_sessions
-    WHERE city NOT IN ('not available in demo dataset','(not set)')
+    SELECT	city,
+          	country,
+          	SUM(CASE WHEN product_quantity IS NULL THEN '1'
+		ELSE product_quantity
+		END) as products_per_city,
+		COUNT(city) as orders_per_city
+    FROM 	all_sessions
+    WHERE 	city NOT IN ('not available in demo dataset','(not set)')
     GROUP BY    city,
                 country
-    ORDER BY city
+    ORDER BY	city
 )
 
 
@@ -108,34 +107,34 @@ FROM
 (
 	WITH categories_per_country AS  
 	(
-		SELECT      country,
-				    product_category,
-				    COUNT(product_category) as count_per_country
-		FROM        all_sessions
-		WHERE       product_category LIKE '%/%'
-		GROUP BY    product_category,
-		            country
-		ORDER BY    product_category,
-		            count_per_country DESC
+		SELECT      	country,
+				product_category,
+				COUNT(product_category) as count_per_country
+		FROM        	all_sessions
+		WHERE       	product_category LIKE '%/%'
+		GROUP BY	product_category,
+		           	country
+		ORDER BY	product_category,
+		        	count_per_country DESC
 	
 	),
 	categories_distribution AS  
 	(
-		SELECT      DISTINCT product_category,
-		            COUNT(product_category) as count_per_category
-		FROM        all_sessions
-		WHERE       product_category LIKE '%/%'
-		GROUP BY    product_category
+		SELECT		DISTINCT product_category,
+		            	COUNT(product_category) as count_per_category
+		FROM        	all_sessions
+		WHERE       	product_category LIKE '%/%'
+		GROUP BY	product_category
 	)	
 
 	
-	SELECT 	    country,
-	            product_category,     
-			    ROUND(((count_per_country::numeric/count_per_category::numeric)*100),2) as percentage,
+	SELECT 	    	country,
+	            	product_category,     
+			ROUND(((count_per_country::numeric/count_per_category::numeric)*100),2) as percentage,
 		        DENSE_RANK()OVER(PARTITION BY product_category ORDER BY count_per_country DESC) as ranking
-	FROM 	    categories_distribution
-	JOIN	    categories_per_country USING (product_category)
-	ORDER BY    product_category 
+	FROM 	    	categories_distribution
+	JOIN	    	categories_per_country USING (product_category)
+	ORDER BY	product_category 
 )
 WHERE ranking = '1'
 ```
@@ -147,32 +146,32 @@ FROM
 (
 	WITH categories_per_country AS  
 	(
-		SELECT      country,
-				    product_category,
-				    COUNT(product_category) as count_per_country
-		FROM        all_sessions
-		WHERE       product_category LIKE '%/%'
-		GROUP BY    product_category,country
-		ORDER BY    product_category,count_per_country
+		SELECT		country,
+				product_category,
+				COUNT(product_category) as count_per_country
+		FROM		all_sessions
+		WHERE		product_category LIKE '%/%'
+		GROUP BY	product_category,country
+		ORDER BY	product_category,count_per_country
 	
 	),
 	categories_distribution AS  
 	(
-		SELECT	    DISTINCT product_category,
-		            COUNT(product_category) as count_per_category
-		FROM        all_sessions
-		WHERE       product_category LIKE '%/%'
-		GROUP BY    product_category
+		SELECT	    	DISTINCT product_category,
+		      		COUNT(product_category) as count_per_category
+		FROM		all_sessions
+		WHERE		product_category LIKE '%/%'
+		GROUP BY	product_category
 	)	
 
 	
-	SELECT 	    country,
-	            product_category,     
-			    ROUND(((count_per_country::numeric/count_per_category::numeric)*100),2) as percentage,
+	SELECT 	    	country,
+	            	product_category,     
+			ROUND(((count_per_country::numeric/count_per_category::numeric)*100),2) as percentage,
 		        (DENSE_RANK()OVER(PARTITION BY product_category ORDER BY count_per_country)) as ranking
-	FROM 	    categories_distribution
-	JOIN	    categories_per_country USING (product_category)
-	ORDER BY    product_category 
+	FROM		categories_distribution
+	JOIN		categories_per_country USING (product_category)
+	ORDER BY	product_category 
 )
 WHERE ranking = '1'
 ```
@@ -196,27 +195,27 @@ SELECT  country,
         product_name,
         num_purchase
 FROM 
-		(	SELECT  country,
-		                productsku,
-		                product_name,
-				        SUM(CASE WHEN product_quantity IS NULL THEN '1'
-					        ELSE product_quantity
-					        END) as num_purchase,
-					    ROW_NUMBER()OVER(
-		 		        PARTITION by country 
-		 		        ORDER BY    SUM(CASE WHEN product_quantity IS NULL THEN '1'
-		 		                    ELSE product_quantity
-		 		                    END)
-		 		                    DESC) as row_number
-			FROM        all_sessions
-			WHERE       country NOT LIKE '%[0-9]%' AND country <> '(not set)'  											
-			GROUP BY    productsku,
-			            country,
-			            product_name
-			ORDER BY    country,
-			            num_purchase DESC	
+(	SELECT		country,
+		  	productsku,
+			product_name,
+			SUM(CASE WHEN product_quantity IS NULL THEN '1'
+			ELSE product_quantity
+			END) as num_purchase,
+			ROW_NUMBER()OVER(
+		 	PARTITION by country 
+		 	ORDER BY    SUM(CASE WHEN product_quantity IS NULL THEN '1'
+		 		    ELSE product_quantity
+		 		    END)
+		 	DESC) as row_number
+	FROM		all_sessions
+	WHERE		country NOT LIKE '%[0-9]%' AND country <> '(not set)'  											
+	GROUP BY	productsku,
+			country,
+			product_name
+	ORDER BY	country,
+			num_purchase DESC	
 		 	
-		) 
+) 
 WHERE row_number = '1'
 ```
 **Query #2 : A situation where a country can have more than one top selling product.**
@@ -225,30 +224,27 @@ SELECT  country,
         productsku,
         product_name,
         num_purchase FROM 
-		(	
-		    SELECT  country,
-		 		    productsku,
-		 		    product_name,
-				    SUM(
-					    CASE WHEN product_quantity IS NULL THEN '1'
-					    ELSE product_quantity
-					    END) as num_purchase,
-		 		    RANK()OVER(
-		 		        partition by country 
-		 		        ORDER BY SUM(
-					                CASE WHEN product_quantity IS NULL THEN '1'
-					                ELSE product_quantity
-					            END) DESC) as row_number
-			FROM        all_sessions
-		 	WHERE       country NOT LIKE '%[0-9]%' AND country <> '(not set)'  									
-			GROUP BY    productsku,
-			            country,
-			            product_name
-			ORDER BY    country,
-			            num_purchase DESC	
-		 	
-		) 
-WHERE row_number = '1' 
+(	
+	SELECT		country,
+			productsku,
+			product_name,
+			SUM(CASE WHEN product_quantity IS NULL THEN '1'
+			ELSE product_quantity
+			END) as num_purchase,
+			RANK()OVER(
+		 	PARTITION by country 
+		 	ORDER BY SUM(CASE WHEN product_quantity IS NULL THEN '1'
+				 ELSE product_quantity
+				 END)DESC) as row_number
+	FROM		all_sessions
+	WHERE		country NOT LIKE '%[0-9]%' AND country <> '(not set)'  									
+	GROUP BY    	productsku,
+			country,
+			product_name
+	ORDER BY	country,
+			num_purchase DESC			 	
+) 
+WHERE	row_number = '1' 
 ```
 
 ***Alertnatively, these queries can be subsituted with city values to find the top-selling product.***
@@ -263,12 +259,14 @@ Patterns Observed
 SELECT  * 
 FROM    
 (
-	    SELECT  city,
-				country,
-				SUM(total_transactionrevenue) as total_revenue
-		FROM all_sessions
-		WHERE total_transactionrevenue > 0 AND city NOT IN ('not available in demo dataset','(not set)')
-		GROUP BY country,city
+	SELECT		city,
+			country,
+			SUM(total_transactionrevenue) as total_revenue
+	FROM 		all_sessions
+	WHERE 		total_transactionrevenue > 0 
+			AND city NOT IN ('not available in demo dataset','(not set)')
+	GROUP BY	country,
+			city
 )
 ORDER BY total_revenue DESC
 ```
@@ -277,21 +275,14 @@ ORDER BY total_revenue DESC
 SELECT  * 
 FROM    
 (
-		SELECT 	country,
-			    SUM(total_transactionrevenue) as total_revenue
-		FROM all_sessions
-		WHERE total_transactionrevenue > 0
-		GROUP BY country
+	SELECT 		country,
+			SUM(total_transactionrevenue) as total_revenue
+	FROM 		all_sessions
+	WHERE 		total_transactionrevenue > 0
+	GROUP BY	country
 )
 ORDER BY total_revenue DESC
 ```
 **Answer:** 
 - The major contibutor country is United States as compared to the least contributing being Switzerland. 
 - In addition to this, San Francisco city has the highest revenue and Zurich being the lowest.
-
-
-
-
-
-
-
