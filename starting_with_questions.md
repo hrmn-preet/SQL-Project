@@ -33,7 +33,7 @@ WITH revenue as
 	WHERE		total_transactionrevenue > 0
 	GROUP BY   	city,
 			country
-	ORDER BY total_revenue DESC
+	ORDER BY 	total_revenue DESC
 )
 				
 SELECT  city, 
