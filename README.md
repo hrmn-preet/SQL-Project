@@ -1,8 +1,6 @@
 # Final-Project-Transforming-and-Analyzing-Data-with-SQL
-```
-This project focuses on analyzing data and finding helpful insights in relation to shopping behaviours
-around the globe for set of products.
-```
+
+>### ***This project focuses on analyzing data and finding helpful insights in relation to shopping behaviours around the globe for set of products using PostgreSQL and PgAdmin.***
 
 ##  Process
 *This project was divided into the following 4 sections which were initiated with import of the given database : Understanding, Analyzing, Transforming and Quality Assurance of the given database*, 
